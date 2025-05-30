@@ -49,9 +49,11 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Lista de colores y etiquetas que se usarán aleatoriamente para crear los elementos
 val colors = listOf("red", "blue", "green")
 val tags = listOf("home", "heart", "person", "phone")
 
+// Data class que representa un elemento CSS
 data class CssItem(
     val id: Int,
     val colorClass: String,
@@ -68,6 +70,8 @@ fun CSSSelectorScreen() {
     var userInput by remember { mutableStateOf(TextFieldValue("")) }
     var showWinDialog by remember { mutableStateOf(false) }
 
+    // Función para crear un nuevo escenario con elementos CSS aleatorios
+    // y un selector correcto basado en un modo de selección aleatorio
     fun createNewScenario() {
         itemList.clear()
         for (i in 0 until 9) {
@@ -77,21 +81,33 @@ fun CSSSelectorScreen() {
             itemList.add(CssItem(i, color, tag, classes))
         }
 
-        val selectionMode = listOf("color", "tag").random()
+        val selectionMode = listOf("color", "tag", "tagColor").random()
         val selected = mutableSetOf<Int>()
 
-        if (selectionMode == "color") {
-            val color = itemList.random().colorClass
-            for (i in itemList.indices) {
-                if (itemList[i].colorClass == color) selected.add(i)
+        when (selectionMode) {
+            "color" -> {
+                val color = itemList.random().colorClass
+                for (i in itemList.indices) {
+                    if (itemList[i].colorClass == color) selected.add(i)
+                }
+                correctSelector = ".${color}"
             }
-            correctSelector = ".${color}"
-        } else if (selectionMode == "tag") {
-            val tag = itemList.random().tag
-            for (i in itemList.indices) {
-                if (itemList[i].tag == tag) selected.add(i)
+            "tag" -> {
+                val tag = itemList.random().tag
+                for (i in itemList.indices) {
+                    if (itemList[i].tag == tag) selected.add(i)
+                }
+                correctSelector = tag
             }
-            correctSelector = tag
+            "tagColor" -> {
+                val item = itemList.random()
+                val tag = item.tag
+                val color = item.colorClass
+                for (i in itemList.indices) {
+                    if (itemList[i].tag == tag && itemList[i].colorClass == color) selected.add(i)
+                }
+                correctSelector = "$tag.$color"
+            }
         }
 
         selectedIndices = selected
@@ -140,8 +156,7 @@ fun CSSSelectorScreen() {
                 val selector = userInput.text.trim()
                 val result = applySelector(selector, itemList)
                 matchedIndices = result
-                val isCorrect = result == selectedIndices
-                showWinDialog = isCorrect
+                showWinDialog = result == selectedIndices
             }) {
                 Icon(Icons.Default.Check, contentDescription = "Comprobar")
                 Spacer(modifier = Modifier.width(4.dp))
@@ -178,6 +193,7 @@ fun CSSSelectorScreen() {
     }
 }
 
+// Representa visualmente un elemento CSS en la pantalla
 @Composable
 fun CssItemBox(item: CssItem, isSelected: Boolean, isMatched: Boolean) {
     val icon: ImageVector = when (item.tag) {
@@ -232,6 +248,8 @@ fun CssItemBox(item: CssItem, isSelected: Boolean, isMatched: Boolean) {
     }
 }
 
+// Aplica un selector CSS a una lista de elementos y devuelve los índices de los elementos que coinciden
+// con el selector. El selector puede ser un tag, una clase o una combinación de ambos.
 fun applySelector(selector: String, items: List<CssItem>): Set<Int> {
     val parts = selector.trim().split(".")
     val tag = parts.getOrNull(0) ?: ""

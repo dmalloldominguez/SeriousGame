@@ -1,1 +1,1 @@
-Aplicación móvil para aprender a desarrollar
+Aplicación móvil para aprender conceptos de desarrollo.
